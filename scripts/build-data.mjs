@@ -9,6 +9,13 @@ const extras = await loadRawPortfolio(EXTRAS_DIR, false);
 const portfolio = buildPortfolio(raw, prices, extras);
 const history = readJson(path.join(DATA_DIR, "history.json"), []);
 
+// first-bought dates derived from IBKR trades (scripts/import-trades.mjs)
+const fb = readJson(path.join(DATA_DIR, "first_bought.json"), null);
+if (fb) {
+  for (const h of portfolio.holdings) h.first_bought = h.first_bought || fb.tickers[h.ticker.toUpperCase()] || null;
+  portfolio.first_bought_from = fb.window_from;
+}
+
 // add a live point for the current upload if history has no entry for today yet
 const today = new Date().toISOString().slice(0, 10);
 const t = portfolio.totals;

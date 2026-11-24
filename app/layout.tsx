@@ -21,14 +21,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#f5f3ee", width: "device-width", initialScale: 1 };
 
 const nav = [
-  { href: "/", label: "Dashboard" },
-  { href: "/holdings", label: "Holdings" },
-  { href: "/about", label: "About" },
+  { href: "/#dashboard", label: "Dashboard" },
+  { href: "/#about", label: "About" },
+  { href: "/#holdings", label: "Holdings" },
 ];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${spaceMono.variable}`}>
+    <html lang="en" style={{ scrollBehavior: "smooth" }} className={`${montserrat.variable} ${spaceMono.variable}`}>
       <body className="min-h-screen antialiased">
         <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
@@ -66,9 +66,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex flex-wrap items-start gap-2 text-sm font-semibold sm:justify-end">
               <a className="rounded-lg border border-line bg-card px-3 py-1.5 hover:border-clover" href="https://www.youtube.com/results?search_query=All+Stocks+Fund" target="_blank" rel="noreferrer">
                 YouTube
-              </a>
-              <a className="rounded-lg border border-line bg-card px-3 py-1.5 hover:border-clover" href="https://www.tiktok.com/@allstocksportfolio" target="_blank" rel="noreferrer">
-                TikTok
               </a>
               <a className="rounded-lg border border-line bg-card px-3 py-1.5 hover:border-clover" href="https://t.me/allstocksfund" target="_blank" rel="noreferrer">
                 Telegram

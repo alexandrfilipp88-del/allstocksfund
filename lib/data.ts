@@ -72,13 +72,14 @@ export const GOAL = 50_000;
 export const START_DATE = "2024-08-19";
 export const PEAK_COMPANIES = 4938; // highest count reached in 2026 (before delistings/mergers)
 
-export function groupCount(holdings: Holding[], key: keyof Holding, top = 12) {
+export function groupCount(holdings: Holding[], key: keyof Holding, top = 12, other = true) {
   const m = new Map<string, number>();
   for (const h of holdings) {
     const k = String(h[key] || "Unknown");
     m.set(k, (m.get(k) || 0) + 1);
   }
   const sorted = [...m.entries()].sort((a, b) => b[1] - a[1]);
+  if (!other) return sorted.slice(0, top).map(([label, value]) => ({ label, value }));
   if (sorted.length <= top) return sorted.map(([label, value]) => ({ label, value }));
   const head = sorted.slice(0, top - 1).map(([label, value]) => ({ label, value }));
   const rest = sorted.slice(top - 1).reduce((a, [, v]) => a + v, 0);

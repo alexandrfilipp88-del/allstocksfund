@@ -9,26 +9,26 @@ type Key = keyof Holding;
 type Col = { key: Key; label: string; w: number; align?: "right"; render: (h: Holding) => React.ReactNode; cls?: (h: Holding) => string };
 
 const COLS: Col[] = [
-  { key: "ticker", label: "Ticker", w: 92, render: (h) => h.ticker },
-  { key: "name", label: "Name", w: 220, render: (h) => h.name || "—" },
-  { key: "exchange", label: "Exchange", w: 92, render: (h) => h.exchange },
-  { key: "country", label: "Country", w: 130, render: (h) => h.country },
-  { key: "sector", label: "Sector", w: 160, render: (h) => h.sector },
-  { key: "buy_price", label: "Avg cost", w: 100, align: "right", render: (h) => fmtPrice(h.buy_price) },
-  { key: "price", label: "Price", w: 100, align: "right", render: (h) => fmtPrice(h.price) },
-  { key: "unrealized_pnl", label: "P/L $", w: 100, align: "right", render: (h) => fmtUsd(h.unrealized_pnl, { sign: true }), cls: (h) => pnlClass(h.unrealized_pnl) },
-  { key: "unrealized_pct", label: "P/L %", w: 92, align: "right", render: (h) => fmtPct(h.unrealized_pct, { sign: true }), cls: (h) => pnlClass(h.unrealized_pct) },
-  { key: "quantity", label: "Quantity", w: 100, align: "right", render: (h) => fmtQty(h.quantity) },
-  { key: "invested", label: "Invested", w: 100, align: "right", render: (h) => fmtUsd(h.invested) },
-  { key: "commission", label: "Commission", w: 104, align: "right", render: (h) => fmtUsd(h.commission) },
-  { key: "net_dividends", label: "Net div.", w: 92, align: "right", render: (h) => fmtUsd(h.net_dividends) },
-  { key: "div_yield_pct", label: "Div yield", w: 92, align: "right", render: (h) => fmtPct(h.div_yield_pct), cls: (h) => ((h.div_yield_pct ?? 0) > 0 ? "text-gold" : "text-muted") },
+  { key: "ticker", label: "Ticker", w: 76, render: (h) => h.ticker },
+  { key: "name", label: "Name", w: 0, render: (h) => h.name || "—" },
+  { key: "exchange", label: "Exch.", w: 72, render: (h) => h.exchange },
+  { key: "buy_price", label: "Avg cost", w: 84, align: "right", render: (h) => fmtPrice(h.buy_price) },
+  { key: "price", label: "Price", w: 84, align: "right", render: (h) => fmtPrice(h.price) },
+  { key: "unrealized_pnl", label: "P/L $", w: 78, align: "right", render: (h) => fmtUsd(h.unrealized_pnl, { sign: true }), cls: (h) => pnlClass(h.unrealized_pnl) },
+  { key: "unrealized_pct", label: "P/L %", w: 82, align: "right", render: (h) => fmtPct(h.unrealized_pct, { sign: true }), cls: (h) => pnlClass(h.unrealized_pct) },
+  { key: "quantity", label: "Qty", w: 70, align: "right", render: (h) => fmtQty(h.quantity) },
+  { key: "invested", label: "Invested", w: 76, align: "right", render: (h) => fmtUsd(h.invested) },
+  { key: "commission", label: "Comm.", w: 64, align: "right", render: (h) => fmtUsd(h.commission) },
+  { key: "net_dividends", label: "Net div.", w: 70, align: "right", render: (h) => fmtUsd(h.net_dividends) },
+  { key: "div_yield_pct", label: "Yield", w: 68, align: "right", render: (h) => fmtPct(h.div_yield_pct), cls: (h) => ((h.div_yield_pct ?? 0) > 0 ? "text-gold" : "text-muted") },
 ];
-const TOTAL_W = COLS.reduce((a, c) => a + c.w, 0);
-const GRID = COLS.map((c) => `${c.w}px`).join(" ");
-const ROW_H = 40;
+// the Name column takes the remaining width; everything fits a laptop screen without sideways scrolling
+const NAME_MIN = 120;
+const MIN_W = COLS.reduce((a, c) => a + (c.w || NAME_MIN), 0);
+const GRID = COLS.map((c) => (c.w ? `${c.w}px` : `minmax(${NAME_MIN}px, 1fr)`)).join(" ");
+const ROW_H = 32;
 
-export function HoldingsTable() {
+export function HoldingsTable({ version = "" }: { version?: string }) {
   const [data, setData] = useState<Portfolio | null>(null);
   const [error, setError] = useState(false);
   const [q, setQ] = useState("");
@@ -44,7 +44,7 @@ export function HoldingsTable() {
   useEffect(() => {
     const initial = new URLSearchParams(window.location.search).get("q");
     if (initial) setQ(initial);
-    fetch("/data/portfolio.json")
+    fetch("/data/portfolio.json?v=" + encodeURIComponent(version))
       .then((r) => r.json())
       .then(setData)
       .catch(() => setError(true));
@@ -61,9 +61,7 @@ export function HoldingsTable() {
     const exact = data.holdings.filter((h) => h.ticker.toLowerCase() === needle);
     let out = data.holdings.filter((h) => {
       if (needle && !h.ticker.toLowerCase().includes(needle) && !h.name.toLowerCase().includes(needle)) return false;
-      if (country && (h.country || "Unknown") !== country) return false;
       if (exchange && (h.exchange || "Unknown") !== exchange) return false;
-      if (sector && (h.sector || "Unknown") !== sector) return false;
       if (pl === "profit" && !((h.unrealized_pnl ?? 0) > 0)) return false;
       if (pl === "loss" && !((h.unrealized_pnl ?? 0) < 0)) return false;
       if (divOnly && !(h.net_dividends > 0)) return false;
@@ -124,9 +122,7 @@ export function HoldingsTable() {
           aria-label="Search ticker or company"
           className="h-10 min-w-0 flex-1 basis-56 rounded-xl border border-line bg-card px-3.5 text-sm outline-none placeholder:text-muted focus:border-clover"
         />
-        <Select label="Country" plural="countries" value={country} onChange={setCountry} options={options.country} />
         <Select label="Exchange" plural="exchanges" value={exchange} onChange={setExchange} options={options.exchange} />
-        <Select label="Sector" plural="sectors" value={sector} onChange={setSector} options={options.sector} />
         <select
           value={pl}
           onChange={(e) => setPl(e.target.value as "" | "profit" | "loss")}
@@ -166,15 +162,15 @@ export function HoldingsTable() {
 
       {/* table */}
       <div ref={scrollRef} className="card relative mt-3 h-[72vh] min-h-[420px] overflow-auto" role="table" aria-label="Holdings" aria-rowcount={rows.length}>
-        <div style={{ width: TOTAL_W, minWidth: "100%" }}>
-          <div role="row" className="sticky top-0 z-20 grid border-b border-line bg-cream text-[11px] font-bold tracking-wide text-ink-2 uppercase" style={{ gridTemplateColumns: GRID }}>
+        <div style={{ minWidth: MIN_W }}>
+          <div role="row" className="sticky top-0 z-20 grid border-b border-line bg-cream text-[10px] font-semibold tracking-wide text-ink-2 uppercase" style={{ gridTemplateColumns: GRID }}>
             {COLS.map((c, i) => (
               <button
                 key={c.key}
                 role="columnheader"
                 aria-sort={sort.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
                 onClick={() => toggleSort(c.key)}
-                className={`flex h-10 items-center gap-1 px-3 hover:text-ink ${c.align === "right" ? "justify-end text-right" : ""} ${i === 0 ? "sticky left-0 z-10 bg-cream" : ""}`}
+                className={`flex h-9 items-center gap-0.5 px-2 whitespace-nowrap hover:text-ink ${c.align === "right" ? "justify-end text-right" : ""} ${i === 0 ? "sticky left-0 z-10 bg-cream" : ""}`}
               >
                 {c.label}
                 <span className={`text-[9px] ${sort.key === c.key ? "text-clover" : "text-transparent"}`}>{sort.dir === 1 ? "▲" : "▼"}</span>
@@ -199,15 +195,15 @@ export function HoldingsTable() {
                     tabIndex={0}
                     onClick={() => setOpen(h)}
                     onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setOpen(h))}
-                    className="group absolute left-0 grid w-full cursor-pointer border-b border-line/60 text-[13px] hover:bg-mint/40 focus:bg-mint/50 focus:outline-none"
+                    className="group absolute left-0 grid w-full cursor-pointer border-b border-line/60 text-[12px] font-normal hover:bg-mint/40 focus:bg-mint/50 focus:outline-none"
                     style={{ gridTemplateColumns: GRID, height: ROW_H, transform: `translateY(${vr.start}px)` }}
                   >
                     {COLS.map((c, i) => (
                       <div
                         key={c.key}
                         role="cell"
-                        className={`num flex items-center truncate px-3 ${c.align === "right" ? "justify-end" : ""} ${c.cls ? c.cls(h) : "text-ink"} ${
-                          i === 0 ? "sticky left-0 z-10 bg-card font-mono font-bold group-hover:bg-[#e9efe8]" : ""
+                        className={`num flex items-center truncate px-2 ${c.align === "right" ? "justify-end" : ""} ${c.cls ? c.cls(h) : "text-ink"} ${
+                          i === 0 ? "sticky left-0 z-10 bg-card font-mono font-semibold group-hover:bg-[#e9efe8]" : ""
                         } ${i === 1 ? "text-ink-2" : ""}`}
                         title={i === 1 ? h.name : undefined}
                       >
@@ -221,7 +217,7 @@ export function HoldingsTable() {
           )}
         </div>
       </div>
-      <p className="mt-2 text-xs text-muted">Tap a row for details. Scroll sideways on small screens. Prices are delayed; “—” means no price was found.</p>
+      <p className="mt-2 text-xs text-muted">Tap a row for details. On phones, scroll sideways for more columns. Prices are delayed; “—” means no price was found.</p>
 
       {open && <Drawer h={open} onClose={() => setOpen(null)} />}
     </div>
