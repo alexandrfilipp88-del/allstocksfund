@@ -21,40 +21,39 @@ const ROWS: { name: string; value: number; src: string }[] = [
   { name: "AP7 (Sweden)", value: 2000, src: "https://www.ap7.se/app/uploads/2025/12/climateactionplan_2025-final.pdf" },
 ];
 
-const SCALE = 25_000;
+export function Benchmarks({ companies, goal }: { companies: number; goal: number }) {
+  // everything in one list, largest first; All Stocks Fund rows are highlighted
+  const rows: { name: string; value: number; src?: string; me?: "now" | "goal" }[] = [
+    ...ROWS,
+    { name: "All Stocks Fund", value: companies, me: "now" as const },
+    { name: "All Stocks Fund target", value: goal, me: "goal" as const },
+  ].sort((a, b) => b.value - a.value);
+  const scale = Math.max(...rows.map((r) => r.value));
 
-function Bar({ value, gold = false }: { value: number; gold?: boolean }) {
-  return (
-    <div className="mt-1 h-2 rounded-r-[3px] bg-ice/70">
-      <div className={`h-full rounded-r-[3px] ${gold ? "bg-gold" : "bg-navy"}`} style={{ width: `${Math.min((value / SCALE) * 100, 100)}%` }} />
-    </div>
-  );
-}
-
-export function Benchmarks({ companies }: { companies: number }) {
   return (
     <div className="card mt-4 p-5 sm:p-6">
       <h3 className="font-display text-base font-bold text-ink">How broad is that?</h3>
       <p className="mt-0.5 text-xs text-muted">Number of companies, compared with some of the world&apos;s biggest investors.</p>
 
-      <div className="mt-5 lg:w-1/2 lg:pr-4">
-        <div className="flex items-baseline justify-between gap-3 text-[13px]">
-          <span className="font-bold text-ink">All Stocks Fund</span>
-          <span className="num font-bold">{fmtInt(companies)}</span>
-        </div>
-        <Bar value={companies} gold />
-      </div>
-
-      <ul className="mt-4 gap-x-8 lg:columns-2">
-        {ROWS.map((r) => (
+      <ul className="mt-5 gap-x-8 lg:columns-2">
+        {rows.map((r) => (
           <li key={r.name} className="mb-3 break-inside-avoid">
             <div className="flex items-baseline justify-between gap-3 text-[13px]">
-              <a href={r.src} target="_blank" rel="noreferrer" className="min-w-0 truncate text-ink hover:text-clover hover:underline">
-                {r.name}
-              </a>
-              <span className="num shrink-0 font-semibold">{fmtInt(r.value)}</span>
+              {r.src ? (
+                <a href={r.src} target="_blank" rel="noreferrer" className="min-w-0 truncate text-ink hover:text-clover hover:underline">
+                  {r.name}
+                </a>
+              ) : (
+                <span className="min-w-0 truncate font-bold text-ink">{r.name}</span>
+              )}
+              <span className={`num shrink-0 ${r.me ? "font-bold" : "font-semibold"}`}>{fmtInt(r.value)}</span>
             </div>
-            <Bar value={r.value} />
+            <div className="mt-1 h-2 rounded-r-[3px] bg-ice/70">
+              <div
+                className={`h-full rounded-r-[3px] ${r.me === "goal" ? "bg-clover" : r.me === "now" ? "bg-gold" : "bg-navy"}`}
+                style={{ width: `${Math.max((r.value / scale) * 100, 0.5)}%` }}
+              />
+            </div>
           </li>
         ))}
       </ul>

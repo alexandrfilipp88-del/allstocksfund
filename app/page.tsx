@@ -174,7 +174,7 @@ export default function Home() {
             </div>
         </div>
 
-        <Benchmarks companies={t.companies} />
+        <Benchmarks companies={t.companies} goal={GOAL} />
       </section>
 
       {/* GROWTH */}
