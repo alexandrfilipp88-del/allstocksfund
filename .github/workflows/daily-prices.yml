@@ -1,0 +1,49 @@
+name: Update prices
+
+# Fetches delayed market prices once a day (after the US close) and whenever a new
+# portfolio file is uploaded, then commits data/prices.json + data/history.json.
+# The commit triggers a Vercel redeploy. No broker access, no secrets needed.
+on:
+  schedule:
+    - cron: "30 22 * * 1-5"
+  push:
+    branches: [main]
+    paths: ["portfolio/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-prices
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch prices and record today's snapshot
+        run: node scripts/update-prices.mjs
+
+      - name: Commit changes
+        run: |
+          git config user.name "asf-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data portfolio
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Daily prices $(date -u +%Y-%m-%d)"
+            git push
+          fi

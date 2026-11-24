@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+/* Brand palette: Clover · Ice · Gold · Cream · Navy · Mint */
+@theme {
+  --color-clover: #336b57;
+  --color-clover-deep: #1f4d3d;
+  --color-ice: #e3e8ec;
+  --color-gold: #9a803c;
+  --color-gold-soft: #efe6cf;
+  --color-cream: #e6e2da;
+  --color-navy: #2f5264;
+  --color-ink: #1c3340;
+  --color-ink-2: #4a5e69;
+  --color-muted: #7a8a92;
+  --color-mint: #cfdcd0;
+  --color-paper: #f5f3ee;
+  --color-card: #fbfaf6;
+  --color-line: #dcd8cf;
+
+  /* data colours (validated for colour-blind separation) */
+  --color-up: #17734f;
+  --color-down: #e0714a;
+  --color-up-text: #17734f;
+  --color-down-text: #b5462a;
+
+  --font-display: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1;
+}
+
+.tracked {
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+
+::selection {
+  background: var(--color-mint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

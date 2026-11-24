@@ -1,0 +1,46 @@
+[
+  {
+    "date": "2024-08-19",
+    "companies": 0,
+    "source": "manual"
+  },
+  {
+    "date": "2024-12-02",
+    "companies": 1880,
+    "source": "manual"
+  },
+  {
+    "date": "2024-12-11",
+    "companies": 2107,
+    "source": "manual"
+  },
+  {
+    "date": "2024-12-22",
+    "companies": 2946,
+    "source": "manual"
+  },
+  {
+    "date": "2024-12-23",
+    "companies": 2995,
+    "source": "manual"
+  },
+  {
+    "date": "2026-07-04",
+    "companies": 3200,
+    "source": "manual"
+  },
+  {
+    "date": "2026-09-17",
+    "companies": 4431,
+    "source": "manual"
+  },
+  {
+    "date": "2026-11-24",
+    "companies": 4821,
+    "invested": 2895.5,
+    "value": 2989.16,
+    "pnl": 127.82,
+    "dividends": 40.92,
+    "source": "daily"
+  }
+]
