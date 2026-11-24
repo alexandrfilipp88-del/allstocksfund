@@ -11,7 +11,6 @@ type Col = { key: Key; label: string; w: number; align?: "right"; render: (h: Ho
 const COLS: Col[] = [
   { key: "ticker", label: "Ticker", w: 76, render: (h) => h.ticker },
   { key: "name", label: "Name", w: 0, render: (h) => h.name || "—" },
-  { key: "exchange", label: "Exch.", w: 72, render: (h) => h.exchange },
   { key: "buy_price", label: "Avg cost", w: 84, align: "right", render: (h) => fmtPrice(h.buy_price) },
   { key: "price", label: "Price", w: 84, align: "right", render: (h) => fmtPrice(h.price) },
   { key: "unrealized_pnl", label: "P/L $", w: 78, align: "right", render: (h) => fmtUsd(h.unrealized_pnl, { sign: true }), cls: (h) => pnlClass(h.unrealized_pnl) },

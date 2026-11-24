@@ -1,7 +1,7 @@
 import { getPortfolio, groupCount, pnlHistogram, daysSinceStart, GOAL, PEAK_COMPANIES, type Holding } from "@/lib/data";
 import { fmtUsd, fmtPct, fmtInt, fmtDate, pnlClass, fmtPrice } from "@/lib/format";
 import { Counter } from "@/components/Counter";
-import { BarList, Histogram, LineChart } from "@/components/Charts";
+import { BarList, Histogram, GrowthBars } from "@/components/Charts";
 import { HoldingsTable } from "@/components/HoldingsTable";
 
 const MILESTONES = [1000, 5000, 10000, 25000, 50000];
@@ -42,16 +42,17 @@ export default function Home() {
   // companies held over time, from the first-bought date of each current holding (IBKR trades)
   const dated = p.holdings.filter((h) => h.first_bought).map((h) => h.first_bought as string).sort();
   const before = p.holdings.length - dated.length;
-  const growth: { date: string; n: number }[] = [];
+  // one bar per buying day: companies owned at the end of that day (+ a first bar for everything bought earlier)
+  const growth: { date: string; n: number; added: number; start?: boolean }[] = [];
   if (p.first_bought_from && dated.length) {
-    growth.push({ date: p.first_bought_from, n: before });
-    dated.forEach((d, i) => {
-      const n = before + i + 1;
-      if (growth[growth.length - 1].date === d) growth[growth.length - 1].n = n;
-      else growth.push({ date: d, n });
-    });
-    const today = (p.prices_updated_at ?? p.updated_at).slice(0, 10);
-    if (growth[growth.length - 1].date < today) growth.push({ date: today, n: p.holdings.length });
+    growth.push({ date: p.first_bought_from, n: before, added: 0, start: true });
+    const perDay = new Map<string, number>();
+    for (const d of dated) perDay.set(d, (perDay.get(d) || 0) + 1);
+    let n = before;
+    for (const [date, added] of [...perDay.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      n += added;
+      growth.push({ date, n, added });
+    }
   }
 
   const comparison = [...BENCHMARKS, { name: "All Stocks Fund today", sub: "companies", value: t.companies, me: "now" as const }, { name: "All Stocks Fund target", sub: "companies", value: GOAL, me: "goal" as const }].sort(
@@ -230,9 +231,9 @@ export default function Home() {
         <section className="mt-12">
           <Panel
             title="Companies owned over time"
-            note={`Every day a new company was bought, from IBKR trade history (available since ${fmtDate(p.first_bought_from)}). ${fmtInt(before)} of today's companies were bought before that.`}
+            note={`One bar per day new companies were bought, from IBKR trade history (available since ${fmtDate(p.first_bought_from)}). The first bar holds the ${fmtInt(before)} companies bought before that.`}
           >
-            <LineChart dates={growth.map((g) => g.date)} series={[{ name: "Companies", color: "#17734f", values: growth.map((g) => g.n), format: "int" }]} height={240} />
+            <GrowthBars data={growth} height={240} />
           </Panel>
         </section>
       )}

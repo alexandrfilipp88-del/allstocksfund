@@ -30,6 +30,71 @@ function Tooltip({ tip }: { tip: Tip }) {
   );
 }
 
+/* ---------------- vertical bars over time (one bar per buying day) ---------------- */
+export function GrowthBars({ data, height = 240 }: { data: { date: string; n: number; added: number; start?: boolean }[]; height?: number }) {
+  const [tip, setTip] = useState<Tip>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const max = niceMax(Math.max(...data.map((d) => d.n), 1));
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * max);
+  const fmtD = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  // month labels under the first bar of a month, spaced out so they never collide
+  const labels: { i: number; text: string }[] = [];
+  data.forEach((d, i) => {
+    const m = d.date.slice(0, 7);
+    const prev = labels[labels.length - 1];
+    if ((i === 0 || data[i - 1].date.slice(0, 7) !== m) && (!prev || i - prev.i >= Math.max(4, Math.round(data.length / 9)))) {
+      const dt = new Date(d.date);
+      labels.push({ i, text: dt.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" }) + (dt.getUTCMonth() === 0 || i === 0 ? " " + String(dt.getUTCFullYear()).slice(2) : "") });
+    }
+  });
+  return (
+    <div className="relative" ref={ref}>
+      <div className="grid grid-cols-[2.75rem_1fr] gap-2">
+        <div className="relative" style={{ height }}>
+          {ticks.map((v) => (
+            <span key={v} className="num absolute right-0 -translate-y-1/2 font-mono text-[10px] text-muted" style={{ top: `${(1 - v / max) * 100}%` }}>
+              {fmtInt(v)}
+            </span>
+          ))}
+        </div>
+        <div className="relative" style={{ height }}>
+          {ticks.map((v) => (
+            <div key={v} className="absolute inset-x-0 border-t" style={{ top: `${(1 - v / max) * 100}%`, borderColor: GRID }} />
+          ))}
+          <div className="absolute inset-0 flex items-end gap-px" onMouseLeave={() => setTip(null)}>
+            {data.map((d) => (
+              <div
+                key={d.date}
+                className="flex h-full min-w-0 flex-1 items-end"
+                onMouseMove={(e) => {
+                  const r = ref.current!.getBoundingClientRect();
+                  const b = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  setTip({
+                    x: b.left - r.left + b.width / 2,
+                    y: b.bottom - r.top - (b.height * d.n) / max,
+                    title: d.start ? `Before ${fmtD(d.date)}` : fmtD(d.date),
+                    lines: d.start ? [`${fmtInt(d.n)} companies already owned`] : [`${fmtInt(d.n)} companies owned`, `+${fmtInt(d.added)} bought that day`],
+                  });
+                }}
+              >
+                <div className="w-full rounded-t-[3px] transition-opacity hover:opacity-75" style={{ height: `${(d.n / max) * 100}%`, background: d.start ? NAVY : UP }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="relative mt-2 ml-[3.25rem] h-4">
+        {labels.map((l) => (
+          <span key={l.i} className="absolute font-mono text-[10px] whitespace-nowrap text-muted" style={{ left: `${((l.i + 0.5) / data.length) * 100}%`, transform: "translateX(-50%)" }}>
+            {l.text}
+          </span>
+        ))}
+      </div>
+      <Tooltip tip={tip} />
+    </div>
+  );
+}
+
 /* ---------------- horizontal bar list (HTML, responsive) ---------------- */
 export function BarList({ data, unit = "companies", color = UP }: { data: { label: string; value: number }[]; unit?: string; color?: string }) {
   const max = Math.max(...data.map((d) => d.value), 1);
