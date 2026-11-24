@@ -19,11 +19,10 @@ const timeline = [
 
 // Number of companies held by large investors (sources linked in the list).
 const BENCHMARKS = [
-  { name: "Blackstone", sub: "portfolio companies (private)", value: 270, approx: "270+", src: "https://www.blackstone.com/the-firm/" },
   { name: "Norway's pension fund (GPFG)", sub: "companies, end of 2025", value: 7201, src: "https://www.nbim.no/en/news-and-insights/reports/" },
-  { name: "BlackRock, all funds", sub: "companies voted, 2024–25", value: 12700, approx: "12,700+", src: "https://corpgov.law.harvard.edu/2025/12/09/2025-global-voting-spotlight/" },
+  { name: "BlackRock, all funds", sub: "companies voted, 2024–25", value: 12700, src: "https://corpgov.law.harvard.edu/2025/12/09/2025-global-voting-spotlight/" },
   { name: "Vanguard, all funds", sub: "portfolio companies voted, 2025", value: 13432, src: "https://corporate.vanguard.com/content/dam/corp/advocate/investment-stewardship/pdf/policies-and-reports/2025_investment_stewardship_annual_report.pdf" },
-  { name: "State Street, all funds", sub: "shareholder meetings voted, 2025", value: 24600, approx: "~24,600", src: "https://www.ssga.com/library-content/assets/pdf/global/asset-stewardship/stewardship-report-2025.pdf" },
+  { name: "State Street, all funds", sub: "shareholder meetings voted, 2025", value: 24600, src: "https://www.ssga.com/library-content/assets/pdf/global/asset-stewardship/stewardship-report-2025.pdf" },
 ];
 
 export default function Home() {
