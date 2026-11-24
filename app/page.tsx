@@ -3,6 +3,7 @@ import { fmtUsd, fmtPct, fmtInt, fmtDate, pnlClass, fmtPrice } from "@/lib/forma
 import { Counter } from "@/components/Counter";
 import { BarList, Histogram, GrowthBars } from "@/components/Charts";
 import { HoldingsTable } from "@/components/HoldingsTable";
+import { Benchmarks } from "@/components/Benchmarks";
 
 const MILESTONES = [1000, 5000, 10000, 25000, 50000];
 
@@ -15,14 +16,6 @@ const timeline = [
   { date: "4 Jul 2026", label: "", text: "~3,200 companies." },
   { date: "17 Sep 2026", label: "", text: "4,431 companies." },
   { date: "Late 2026", label: "", text: "Peak of 4,938 companies, then a few delistings and mergers." },
-];
-
-// Number of companies held by large investors (sources linked in the list).
-const BENCHMARKS = [
-  { name: "Norway's pension fund (GPFG)", sub: "companies, end of 2025", value: 7201, src: "https://www.nbim.no/en/news-and-insights/reports/" },
-  { name: "BlackRock, all funds", sub: "companies voted, 2024–25", value: 12700, src: "https://corpgov.law.harvard.edu/2025/12/09/2025-global-voting-spotlight/" },
-  { name: "Vanguard, all funds", sub: "portfolio companies voted, 2025", value: 13432, src: "https://corporate.vanguard.com/content/dam/corp/advocate/investment-stewardship/pdf/policies-and-reports/2025_investment_stewardship_annual_report.pdf" },
-  { name: "State Street, all funds", sub: "shareholder meetings voted, 2025", value: 24600, src: "https://www.ssga.com/library-content/assets/pdf/global/asset-stewardship/stewardship-report-2025.pdf" },
 ];
 
 export default function Home() {
@@ -52,10 +45,6 @@ export default function Home() {
       growth.push({ date, n, added });
     }
   }
-
-  const comparison = [...BENCHMARKS, { name: "All Stocks Fund today", sub: "companies", value: t.companies, me: "now" as const }, { name: "All Stocks Fund target", sub: "companies", value: GOAL, me: "goal" as const }].sort(
-    (a, b) => a.value - b.value,
-  );
 
   return (
     <div className="mx-auto max-w-6xl px-4">
@@ -162,6 +151,8 @@ export default function Home() {
                 <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">Gradually concentrate into the top tiers, letting the market decide.</p>
               </div>
             </div>
+          </div>
+
             <div className="card p-5">
               <h3 className="tracked text-[11px] font-bold text-ink-2">Timeline</h3>
               <ol className="mt-4 border-l-2 border-mint pl-5">
@@ -181,46 +172,9 @@ export default function Home() {
                 </li>
               </ol>
             </div>
-          </div>
-
-          <div className="card p-5 sm:p-6">
-            <h3 className="font-display text-base font-bold text-ink">How broad is that?</h3>
-            <p className="mt-0.5 mb-5 text-xs text-muted">Number of companies held, compared with the biggest investors and index funds.</p>
-            <ul className="space-y-3">
-              {comparison.map((c) => {
-                const me = "me" in c ? c.me : undefined;
-                const src = "src" in c ? c.src : undefined;
-                return (
-                  <li key={c.name}>
-                    <div className="flex items-baseline justify-between gap-3 text-[13px]">
-                      <span className={me ? "font-bold text-ink" : "text-ink"}>
-                        {src ? (
-                          <a href={src} target="_blank" rel="noreferrer" className="hover:text-clover hover:underline">
-                            {c.name}
-                          </a>
-                        ) : (
-                          c.name
-                        )}
-                        <span className="ml-1.5 text-[11px] text-muted">{c.sub}</span>
-                      </span>
-                      <span className="num shrink-0 font-semibold">{fmtInt(c.value)}</span>
-                    </div>
-                    <div className="mt-1 h-2.5">
-                      <div
-                        className={`h-full rounded-r-[4px] ${me === "goal" ? "bg-clover" : me === "now" ? "bg-gold" : "bg-navy"}`}
-                        style={{ width: `${Math.max((c.value / GOAL) * 100, 0.8)}%` }}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="mt-5 text-[11px] leading-relaxed text-muted">
-              Figures are the latest published numbers; click a name for the source. Asset-manager totals count companies voted
-              (Vanguard, BlackRock) or shareholder meetings voted (State Street) across all their funds.
-            </p>
-          </div>
         </div>
+
+        <Benchmarks companies={t.companies} goal={GOAL} />
       </section>
 
       {/* GROWTH */}
