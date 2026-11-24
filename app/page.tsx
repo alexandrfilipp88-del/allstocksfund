@@ -21,8 +21,7 @@ const timeline = [
 const BENCHMARKS = [
   { name: "Blackstone", sub: "portfolio companies (private)", value: 270, approx: "270+", src: "https://www.blackstone.com/the-firm/" },
   { name: "Norway's pension fund (GPFG)", sub: "companies, end of 2025", value: 7201, src: "https://www.nbim.no/en/news-and-insights/reports/" },
-  { name: "MSCI ACWI IMI index", sub: "constituents", value: 8017, src: "https://www.msci.com/www/index-factsheets/msci-acwi-imi/09234846" },
-  { name: "Vanguard Total World ETF (VT)", sub: "stocks", value: 10158, src: "https://investor.vanguard.com/investment-products/etfs/profile/vt" },
+  { name: "BlackRock, all funds", sub: "companies voted, 2024–25", value: 12700, approx: "12,700+", src: "https://corpgov.law.harvard.edu/2025/12/09/2025-global-voting-spotlight/" },
   { name: "Vanguard, all funds", sub: "portfolio companies voted, 2025", value: 13432, src: "https://corporate.vanguard.com/content/dam/corp/advocate/investment-stewardship/pdf/policies-and-reports/2025_investment_stewardship_annual_report.pdf" },
   { name: "State Street, all funds", sub: "shareholder meetings voted, 2025", value: 24600, approx: "~24,600", src: "https://www.ssga.com/library-content/assets/pdf/global/asset-stewardship/stewardship-report-2025.pdf" },
 ];
@@ -219,8 +218,8 @@ export default function Home() {
               })}
             </ul>
             <p className="mt-5 text-[11px] leading-relaxed text-muted">
-              Fund and index figures are the latest published numbers; click a name for the source. Asset-manager totals count companies voted
-              (Vanguard) or shareholder meetings voted (State Street) across all their funds.
+              Figures are the latest published numbers; click a name for the source. Asset-manager totals count companies voted
+              (Vanguard, BlackRock) or shareholder meetings voted (State Street) across all their funds.
             </p>
           </div>
         </div>
