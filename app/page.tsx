@@ -190,7 +190,6 @@ export default function Home() {
               {comparison.map((c) => {
                 const me = "me" in c ? c.me : undefined;
                 const src = "src" in c ? c.src : undefined;
-                const approx = "approx" in c ? c.approx : undefined;
                 return (
                   <li key={c.name}>
                     <div className="flex items-baseline justify-between gap-3 text-[13px]">
@@ -204,7 +203,7 @@ export default function Home() {
                         )}
                         <span className="ml-1.5 text-[11px] text-muted">{c.sub}</span>
                       </span>
-                      <span className="num shrink-0 font-semibold">{approx ?? fmtInt(c.value)}</span>
+                      <span className="num shrink-0 font-semibold">{fmtInt(c.value)}</span>
                     </div>
                     <div className="mt-1 h-2.5">
                       <div
