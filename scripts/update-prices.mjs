@@ -26,6 +26,11 @@ try {
 }
 
 const raw = await loadRawPortfolio();
+if (raw.source === "ibkr") {
+  // positions and prices come from IBKR imports, which record their own snapshot
+  console.log("[prices] portfolio comes from IBKR - metadata refreshed, history left unchanged");
+  process.exit(0);
+}
 const p = buildPortfolio(raw, priceData);
 const t = p.totals;
 const histFile = path.join(DATA_DIR, "history.json");

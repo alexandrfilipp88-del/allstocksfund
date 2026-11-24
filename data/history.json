@@ -36,11 +36,11 @@
   },
   {
     "date": "2026-11-24",
-    "companies": 4821,
-    "invested": 2895.5,
-    "value": 2989.16,
-    "pnl": 127.82,
-    "dividends": 40.92,
-    "source": "daily"
+    "companies": 4801,
+    "invested": 3067.35,
+    "value": 3071.37,
+    "pnl": 4.03,
+    "dividends": 40.67,
+    "source": "ibkr"
   }
 ]

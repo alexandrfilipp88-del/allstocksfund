@@ -14,7 +14,7 @@ const COLS: Col[] = [
   { key: "exchange", label: "Exchange", w: 92, render: (h) => h.exchange },
   { key: "country", label: "Country", w: 130, render: (h) => h.country },
   { key: "sector", label: "Sector", w: 160, render: (h) => h.sector },
-  { key: "buy_price", label: "Buy price", w: 100, align: "right", render: (h) => fmtPrice(h.buy_price) },
+  { key: "buy_price", label: "Avg cost", w: 100, align: "right", render: (h) => fmtPrice(h.buy_price) },
   { key: "price", label: "Price", w: 100, align: "right", render: (h) => fmtPrice(h.price) },
   { key: "unrealized_pnl", label: "P/L $", w: 100, align: "right", render: (h) => fmtUsd(h.unrealized_pnl, { sign: true }), cls: (h) => pnlClass(h.unrealized_pnl) },
   { key: "unrealized_pct", label: "P/L %", w: 92, align: "right", render: (h) => fmtPct(h.unrealized_pct, { sign: true }), cls: (h) => pnlClass(h.unrealized_pct) },
@@ -89,7 +89,7 @@ export function HoldingsTable() {
   const sums = useMemo(() => {
     const s = { invested: 0, mv: 0, pnl: 0, div: 0 };
     for (const h of rows) {
-      s.invested += h.invested;
+      s.invested += h.cost;
       s.mv += h.market_value ?? 0;
       s.pnl += h.unrealized_pnl ?? 0;
       s.div += h.net_dividends;
@@ -154,7 +154,7 @@ export function HoldingsTable() {
           <span>
             <strong className="text-ink">{data ? fmtInt(rows.length) : "…"}</strong> of {data ? fmtInt(data.holdings.length) : "…"} companies
           </span>
-          <span>Invested {fmtUsd(sums.invested)}</span>
+          <span>Cost {fmtUsd(sums.invested)}</span>
           <span>Value {fmtUsd(sums.mv)}</span>
           <span className={pnlClass(sums.pnl)}>P/L {fmtUsd(sums.pnl, { sign: true })}</span>
           <span>Dividends {fmtUsd(sums.div)}</span>
@@ -258,10 +258,11 @@ function Drawer({ h, onClose }: { h: Holding; onClose: () => void }) {
     ["Sector", h.sector],
     ["Industry", h.industry || "—"],
     ["Quantity", fmtQty(h.quantity)],
-    ["Buy price (avg)", fmtPrice(h.buy_price)],
+    ["Avg cost / share", fmtPrice(h.buy_price)],
     ["Current price", fmtPrice(h.price)],
     ["Invested", fmtUsd(h.invested)],
     ["Commission", fmtUsd(h.commission)],
+    ["Cost basis", fmtUsd(h.cost)],
     ["Market value", fmtUsd(h.market_value)],
     ["Unrealized P/L", `${fmtUsd(h.unrealized_pnl, { sign: true })} (${fmtPct(h.unrealized_pct, { sign: true })})`, pnlClass(h.unrealized_pnl)],
     ["Net dividends", fmtUsd(h.net_dividends)],

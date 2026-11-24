@@ -92,13 +92,13 @@ export default function Home() {
 
       {/* KPIs */}
       <section aria-label="Key numbers" className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Kpi label="Total invested" value={fmtUsd(t.invested_usd)} sub={`${fmtUsd(t.avg_invested_per_company_usd)} avg per company`} />
+        <Kpi label="Cost basis" value={fmtUsd(t.cost_usd)} sub={`${fmtUsd(t.avg_invested_per_company_usd)} avg per company`} />
         <Kpi label="Market value" value={fmtUsd(t.market_value_usd)} sub={`${fmtInt(t.priced_count)} positions priced`} />
         <Kpi
           label="Unrealized P/L"
           value={fmtUsd(t.unrealized_pnl_usd, { sign: true })}
           valueClass={pnlClass(t.unrealized_pnl_usd)}
-          sub={fmtPct(t.unrealized_pct, { sign: true }) + " on invested"}
+          sub={fmtPct(t.unrealized_pct, { sign: true }) + " on cost"}
         />
         <Kpi
           label="Total return"
@@ -107,7 +107,7 @@ export default function Home() {
           sub="incl. dividends & commissions"
         />
         <Kpi label="Net dividends" value={fmtUsd(t.net_dividends_usd)} sub={`${fmtInt(t.dividend_payers)} dividend payers`} />
-        <Kpi label="Commissions paid" value={fmtUsd(t.commissions_usd)} sub={`${fmtPct((t.commissions_usd / t.invested_usd) * 100)} of invested`} />
+        <Kpi label="Commissions paid" value={fmtUsd(t.commissions_usd)} sub={`${fmtPct((t.commissions_usd / t.cost_usd) * 100)} of cost`} />
         <Kpi
           label="In profit / in loss"
           value={
@@ -136,7 +136,7 @@ export default function Home() {
               dates={valueHist.map((h) => h.date)}
               series={[
                 { name: "Market value", color: "#17734f", values: valueHist.map((h) => h.value ?? null), format: "usd" },
-                { name: "Invested", color: "#2f5264", dashed: true, values: valueHist.map((h) => h.invested ?? null), format: "usd" },
+                { name: "Cost basis", color: "#2f5264", dashed: true, values: valueHist.map((h) => h.invested ?? null), format: "usd" },
               ]}
             />
           ) : (

@@ -1,11 +1,11 @@
-name: Update prices
+name: Refresh company metadata
 
-# Fetches delayed market prices once a day (after the US close) and whenever a new
-# portfolio file is uploaded, then commits data/prices.json + data/history.json.
-# The commit triggers a Vercel redeploy. No broker access, no secrets needed.
+# Weekly (and on every portfolio upload): refreshes company names, sectors and countries
+# from the public nasdaq.com screener into data/prices.json. When the portfolio comes from
+# an IBKR import, positions/prices/P&L are IBKR's own and are not touched. No secrets needed.
 on:
   schedule:
-    - cron: "30 22 * * 1-5"
+    - cron: "30 22 * * 0"
   push:
     branches: [main]
     paths: ["portfolio/**"]

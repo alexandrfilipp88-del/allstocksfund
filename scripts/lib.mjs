@@ -12,6 +12,7 @@ import Papa from "papaparse";
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const PORTFOLIO_DIR = path.join(ROOT, "portfolio");
+export const EXTRAS_DIR = path.join(ROOT, "extras");
 export const DATA_DIR = path.join(ROOT, "data");
 export const PUBLIC_DATA_DIR = path.join(ROOT, "public", "data");
 
@@ -25,10 +26,13 @@ const ALIASES = {
   status: ["status"],
   buy_price: ["price", "buyprice", "avgprice", "averageprice", "average_price", "costprice", "avgcost"],
   quantity: ["quantity", "qty", "position", "shares"],
-  invested: ["invested", "investment", "costbasis", "amount"],
+  invested: ["invested", "investment", "amount"],
   commission: ["comission", "commission", "commissions", "fees", "fee"],
   net_dividends: ["divnet", "netdividends", "dividends", "dividend", "divs"],
   market_price: ["marketprice", "market_price", "currentprice", "lastprice", "last", "mktprice"],
+  market_value: ["marketvalue", "market_value", "value", "mktvalue"],
+  unrealized_pnl: ["unrealizedpnl", "unrealized_pnl", "unrealizedpl", "pnl"],
+  cost_basis: ["costbasis", "cost_basis", "cost", "totalcost"],
   first_bought: ["firstbought", "date", "buydate", "tradedate", "opened"],
 };
 
@@ -85,6 +89,9 @@ function rowsFromTable(table) {
     commission: num(get(r, "commission")),
     net_dividends: num(get(r, "net_dividends")),
     market_price: num(get(r, "market_price")),
+    market_value: num(get(r, "market_value")),
+    unrealized_pnl: num(get(r, "unrealized_pnl")),
+    cost_basis: num(get(r, "cost_basis")),
     first_bought: dateStr(get(r, "first_bought")),
   }));
 }
@@ -109,25 +116,33 @@ function gitTime(file) {
   }
 }
 
-export function findPortfolioFile() {
-  if (!fs.existsSync(PORTFOLIO_DIR)) throw new Error("Missing /portfolio folder");
+export function findPortfolioFile(dir = PORTFOLIO_DIR, required = true) {
+  if (!fs.existsSync(dir)) {
+    if (!required) return null;
+    throw new Error("Missing folder " + dir);
+  }
   const files = fs
-    .readdirSync(PORTFOLIO_DIR)
+    .readdirSync(dir)
     .filter((f) => /\.(xlsx|csv|json)$/i.test(f) && !f.startsWith("~$"))
     .map((f) => {
-      const full = path.join(PORTFOLIO_DIR, f);
+      const full = path.join(dir, f);
       return { full, name: f, time: gitTime(full) || fs.statSync(full).mtimeMs };
     });
-  if (!files.length) throw new Error("No .xlsx, .csv or .json file found in /portfolio");
+  if (!files.length) {
+    if (!required) return null;
+    throw new Error("No .xlsx, .csv or .json file found in " + dir);
+  }
   // newest file wins (by git commit time when available, otherwise file time, then name)
   files.sort((a, b) => b.time - a.time || b.name.localeCompare(a.name));
   return { ...files[0], all: files };
 }
 
-export async function loadRawPortfolio() {
-  const file = findPortfolioFile();
+export async function loadRawPortfolio(dir = PORTFOLIO_DIR, required = true) {
+  const file = findPortfolioFile(dir, required);
+  if (!file) return null;
   const ext = path.extname(file.name).toLowerCase();
   let rows;
+  let meta = {};
   if (ext === ".xlsx") {
     const sheets = await readXlsx(file.full);
     const sheet = Array.isArray(sheets) && sheets[0]?.data ? sheets[0].data : sheets;
@@ -137,7 +152,9 @@ export async function loadRawPortfolio() {
     const parsed = Papa.parse(text, { skipEmptyLines: true });
     rows = rowsFromTable(parsed.data);
   } else {
-    rows = rowsFromJson(JSON.parse(fs.readFileSync(file.full, "utf8")));
+    const json = JSON.parse(fs.readFileSync(file.full, "utf8"));
+    if (!Array.isArray(json)) meta = { source: json.source, as_of: json.as_of };
+    rows = rowsFromJson(json);
   }
   rows = rows.filter((r) => r.ticker && !/^(sold|closed)$/i.test(r.status) && (r.quantity ?? 0) > 0);
   // merge duplicate tickers (e.g. the same stock bought twice on separate rows)
@@ -154,10 +171,11 @@ export async function loadRawPortfolio() {
     prev.invested = add(prev.invested, r.invested);
     prev.commission = add(prev.commission, r.commission);
     prev.net_dividends = add(prev.net_dividends, r.net_dividends);
+    for (const k of ["market_value", "unrealized_pnl", "cost_basis"]) prev[k] = prev[k] == null && r[k] == null ? null : add(prev[k], r[k]);
     prev.buy_price = prev.quantity ? prev.invested / prev.quantity : prev.buy_price;
     if (r.first_bought && (!prev.first_bought || r.first_bought < prev.first_bought)) prev.first_bought = r.first_bought;
   }
-  return { file: file.name, rows: [...byTicker.values()] };
+  return { file: file.name, ...meta, rows: [...byTicker.values()] };
 }
 
 // ---------- prices ----------
@@ -213,32 +231,45 @@ export const HOLDING_KEYS = [
   "market_value", "unrealized_pnl", "unrealized_pct", "net_dividends", "div_yield_pct", "first_bought",
 ];
 
-export function buildPortfolio(raw, priceData) {
+export function buildPortfolio(raw, priceData, extras = null) {
   const prices = priceData?.prices || {};
-  const holdings = raw.rows.map((r) => {
+  // optional per-ticker extras (dividends, commissions, exchange...) e.g. from an older spreadsheet
+  const extra = new Map((extras?.rows || []).map((r) => [r.ticker.toUpperCase(), r]));
+  const holdings = raw.rows.map((r0) => {
+    const x = extra.get(r0.ticker.toUpperCase()) || {};
+    const r = { ...r0 };
+    for (const k of ['name', 'exchange', 'country', 'first_bought']) if (!r[k]) r[k] = x[k] || r[k];
+    for (const k of ['net_dividends', 'commission']) if (r[k] == null) r[k] = x[k] ?? null;
     const feed = prices[feedSymbol(r.ticker)];
     const price = r.market_price ?? feed?.p ?? null;
-    const invested = r.invested ?? (r.quantity && r.buy_price ? r.quantity * r.buy_price : 0);
     const commission = r.commission ?? 0;
-    const market_value = price !== null ? r.quantity * price : null;
-    const pnl = market_value !== null ? market_value - invested : null;
+    // cost = what the position cost incl. commissions (IBKR cost basis = quantity x average price)
+    const cost =
+      r.cost_basis ??
+      (r.market_price != null && r.buy_price != null && r.invested == null
+        ? r.quantity * r.buy_price
+        : (r.invested ?? (r.quantity && r.buy_price ? r.quantity * r.buy_price : 0)) + commission);
+    const invested = r.invested != null && r.cost_basis == null ? r.invested : Math.max(cost - commission, 0);
+    const market_value = r.market_value ?? (price !== null ? r.quantity * price : null);
+    const pnl = r.unrealized_pnl ?? (market_value !== null ? market_value - cost : null);
     const divs = r.net_dividends ?? 0;
     const h = {
       ticker: r.ticker,
-      name: r.name || feed?.n || "",
-      exchange: r.exchange || "",
-      country: feed?.c || COUNTRY_CODES[r.country?.toUpperCase()] || r.country || "Unknown",
-      sector: feed?.s || "Unknown",
-      industry: feed?.i || "",
+      name: r.name || feed?.n || '',
+      exchange: r.exchange || '',
+      country: feed?.c || COUNTRY_CODES[r.country?.toUpperCase()] || r.country || 'Unknown',
+      sector: feed?.s || 'Unknown',
+      industry: feed?.i || '',
       quantity: r2(r.quantity, 6),
-      buy_price: r2(r.buy_price ?? (r.quantity ? invested / r.quantity : null), 4),
+      buy_price: r2(r.buy_price ?? (r.quantity ? cost / r.quantity : null), 4),
       price: r2(price, 4),
       invested: r2(invested, 4),
       commission: r2(commission, 4),
-      cost: r2(invested + commission, 4),
+      cost: r2(cost, 4),
       market_value: r2(market_value, 4),
       unrealized_pnl: r2(pnl, 4),
-      unrealized_pct: pnl !== null && invested > 0 ? r2((pnl / invested) * 100, 2) : null,
+      // same convention as IBKR: unrealized P/L relative to cost basis (incl. commissions)
+      unrealized_pct: pnl !== null && cost > 0 ? r2((pnl / cost) * 100, 2) : null,
       net_dividends: r2(divs, 4),
       // yield on cost: net dividends received / pure invested amount
       div_yield_pct: invested > 0 ? r2((divs / invested) * 100, 2) : null,
@@ -249,32 +280,30 @@ export function buildPortfolio(raw, priceData) {
 
   const sum = (arr, k) => arr.reduce((a, h) => a + (h[k] ?? 0), 0);
   const priced = holdings.filter((h) => h.price !== null);
-  const investedAll = sum(holdings, "invested");
-  const investedPriced = sum(priced, "invested");
-  const mv = sum(priced, "market_value");
-  const pnl = sum(priced, "unrealized_pnl");
-  const divs = sum(holdings, "net_dividends");
-  const comm = sum(holdings, "commission");
+  const investedAll = sum(holdings, 'invested');
+  const costAll = sum(holdings, 'cost');
+  const costPriced = sum(priced, 'cost');
+  const mv = sum(priced, 'market_value');
+  const pnl = sum(priced, 'unrealized_pnl');
+  const divs = sum(holdings, 'net_dividends');
+  const comm = sum(holdings, 'commission');
   const totals = {
     companies: holdings.length,
     priced_count: priced.length,
     invested_usd: r2(investedAll),
     commissions_usd: r2(comm),
-    cost_usd: r2(investedAll + comm),
+    cost_usd: r2(costAll),
     market_value_usd: r2(mv),
     unrealized_pnl_usd: r2(pnl),
-    unrealized_pct: investedPriced > 0 ? r2((pnl / investedPriced) * 100) : null,
+    unrealized_pct: costPriced > 0 ? r2((pnl / costPriced) * 100) : null,
     net_dividends_usd: r2(divs),
-    // total return on priced positions: value + dividends vs money spent incl. commissions
-    total_return_pct:
-      investedPriced > 0
-        ? r2(((mv + sum(priced, "net_dividends") - investedPriced - sum(priced, "commission")) / (investedPriced + sum(priced, "commission"))) * 100)
-        : null,
+    // total return on priced positions: value + dividends vs cost incl. commissions
+    total_return_pct: costPriced > 0 ? r2(((mv + sum(priced, 'net_dividends') - costPriced) / costPriced) * 100) : null,
     profit_count: priced.filter((h) => h.unrealized_pnl > 0.00005).length,
     loss_count: priced.filter((h) => h.unrealized_pnl < -0.00005).length,
     flat_count: priced.filter((h) => Math.abs(h.unrealized_pnl) <= 0.00005).length,
     dividend_payers: holdings.filter((h) => h.net_dividends > 0).length,
-    avg_invested_per_company_usd: holdings.length ? r2(investedAll / holdings.length) : 0,
+    avg_invested_per_company_usd: holdings.length ? r2(costAll / holdings.length) : 0,
   };
 
   // validation: totals must equal the sum of the rows
@@ -286,8 +315,9 @@ export function buildPortfolio(raw, priceData) {
 
   return {
     updated_at: new Date().toISOString(),
-    prices_updated_at: priceData?.updated_at || null,
+    prices_updated_at: raw.as_of || priceData?.updated_at || null,
     source_file: raw.file,
+    source: raw.source || "upload",
     totals,
     holdings,
   };

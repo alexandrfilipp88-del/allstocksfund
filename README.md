@@ -4,7 +4,18 @@ Public, transparent dashboard of the All Stocks Fund portfolio: thousands of tin
 
 Built with Next.js (App Router) + Tailwind and deployed on Vercel from `main`. Every page is static. The site never connects to the broker; it only reads files committed to this repo.
 
-## Updating the portfolio (manual, for now)
+## Updating the portfolio from IBKR (preferred)
+
+Positions, prices, cost basis and unrealized P/L come straight from Interactive Brokers:
+
+1. Export positions with the IBKR connector (`get_account_positions`) and save the JSON as `raw/positions.json` (git-ignored).
+2. Run `npm run ibkr`. It writes the sanitized `portfolio/portfolio.json` (allowlisted per-stock fields only) and records today's snapshot in `data/history.json`.
+3. Commit `portfolio/` and `data/` and push. Vercel redeploys.
+
+P/L % uses IBKR's convention: unrealized P/L ÷ cost basis (average price incl. commissions).
+Per-stock dividends and commissions (not in the IBKR positions export) come from the newest sheet in `extras/`.
+
+## Updating the portfolio manually
 
 1. Export the portfolio as **.xlsx, .csv or .json**.
 2. On GitHub, open the **`portfolio/`** folder → **Add file → Upload files**, drop the file, and **Commit**.

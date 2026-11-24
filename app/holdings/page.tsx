@@ -15,7 +15,7 @@ export default function HoldingsPage() {
       </h1>
       <p className="mt-2 mb-6 max-w-2xl text-sm text-ink-2">
         Every position in the portfolio. Sort any column, search by ticker or name, and filter by country, exchange, sector or
-        profit/loss. Dividend yield is shown on cost: net dividends received ÷ amount invested.
+        profit/loss. Positions, prices and P/L come from Interactive Brokers; P/L % is on cost basis (incl. commissions), like in IBKR. Dividend yield = net dividends ÷ amount invested.
       </p>
       <HoldingsTable />
     </div>

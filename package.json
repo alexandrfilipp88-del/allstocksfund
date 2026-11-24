@@ -10,7 +10,8 @@
     "dev": "next dev",
     "prebuild": "node scripts/build-data.mjs",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "ibkr": "node scripts/import-ibkr.mjs"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.14.28",
